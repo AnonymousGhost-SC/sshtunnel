@@ -178,7 +178,20 @@ Start-ScheduledTask -TaskName $task
 Step "Waiting for the tunnel server"
 $h = ""
 for ($i = 0; $i -lt 15 -and $h -ne "OK"; $i++) { Start-Sleep 1; $h = Get-Health "http://127.0.0.1:$port/health" }
-if ($h -ne "OK") { Fail "The tunnel server did not start. Read $d\chisel.log" }
+if ($h -ne "OK") {
+    $threat = Get-MpThreat -ErrorAction SilentlyContinue | Where-Object { $_.Resources -match 'chisel' } | Select-Object -First 1
+    if ($threat -or -not (Test-Path "$d\chisel.exe")) {
+        Write-Host "Antivirus detection: $($threat.ThreatName)"
+        Fail ("Antivirus blocked chisel.exe. Allow the folder with:`n" +
+              "  Add-MpPreference -ExclusionPath $d`n" +
+              "then repeat the download (Step 1) and this script (Step 2).")
+    }
+    Write-Host "Task state: $((Get-ScheduledTask -TaskName $task).State), last result: $((Get-ScheduledTaskInfo -TaskName $task).LastTaskResult)"
+    Write-Host "chisel.exe --version: $((cmd /c "`"$d\chisel.exe`" --version 2>&1") -join ' ')"
+    if (Test-Path "$d\chisel.log") { Write-Host "Last lines of chisel.log:"; Get-Content "$d\chisel.log" -Tail 8 | ForEach-Object { Write-Host "  $_" } }
+    else { Write-Host "chisel.log does not exist, so the startup task never ran run.cmd." }
+    Fail "The tunnel server did not start. Send the lines above."
+}
 Ok "Tunnel server running on 127.0.0.1:$port, starts at every boot"
 
 # --- 4. Apache forward ------------------------------------------------------
