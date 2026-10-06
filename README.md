@@ -33,13 +33,11 @@ your PC: ssh scra-ws
 
 ### A1. Set the variables
 
-Replace `CHANGE-ME` with the GitHub account that holds this repo before you paste the second line.
-
 ```powershell
 $d = "C:\sshtunnel"
 ```
 ```powershell
-$repo = "https://github.com/CHANGE-ME/sshtunnel.git"
+$repo = "https://github.com/AnonymousGhost-SC/sshtunnel.git"
 ```
 ```powershell
 $h = (Get-Process httpd | Select-Object -First 1).Path
@@ -61,9 +59,6 @@ Skip this step if `C:\sshtunnel` already exists.
 ```powershell
 git clone $repo $d
 ```
-
-A private repo asks for a GitHub username and password. Enter your GitHub username, and a **personal access token** as the password (GitHub → Settings → Developer settings → Personal access tokens).
-
 ```powershell
 Get-ChildItem $d
 ```
@@ -103,7 +98,6 @@ Get-Content "$d\users.json"
 ```
 
 **Expected:** one line like `{"tunnel:Ab3xK9...": ["^127.0.0.1:(22|8989)$"]}`.
-**Copy the part between `tunnel:` and `"`. That is the tunnel password for Part B.**
 
 ### A5. Start the tunnel server at every boot
 
@@ -145,7 +139,6 @@ Select-String Fingerprint "$d\chisel.log"
 ```
 
 **Expected:** a line ending in `server: Fingerprint` followed by a value like `U2iyQoA0c38XONp6MIXKBMmwiB/xaqwHvM/sdR8tcK4=`.
-**Copy the value after `Fingerprint `. That is the server fingerprint for Part B.**
 
 ### A6. Add the forward to Apache
 
@@ -213,7 +206,31 @@ ProxyPass "/sshws/" "ws://127.0.0.1:47900/"
 
 Run A6's `& $h -t -d $ap -f $c` line again (expected `Syntax OK`), repeat A7, then repeat A8.
 
-**Part A is complete.** The server is ready. Write down the **tunnel password** (A4) and the **fingerprint** (A5).
+### A9. Print the two lines for your PC
+
+```powershell
+$pat = 'Fingerprint (\S+)'
+```
+```powershell
+$fp = ([regex]$pat).Match((Get-Content "$d\chisel.log" -Raw)).Groups[1].Value
+```
+```powershell
+$pw = ([regex]'tunnel:([^"]+)').Match((Get-Content "$d\users.json")).Groups[1].Value
+```
+```powershell
+"`$fp = '$fp'"; "`$pw = '$pw'"
+```
+
+**Expected:** two lines like these:
+
+```
+$fp = 'U2iyQoA0c38XONp6MIXKBMmwiB/xaqwHvM/sdR8tcK4='
+$pw = 'Ab3xK9mQ2rT7vW1zY5cE8hJx'
+```
+
+Copy both lines. Step B3 pastes them on your PC. They are the only secrets, so keep them out of chat and email.
+
+**Part A is complete.**
 
 ---
 
@@ -232,22 +249,16 @@ curl.exe -s https://fmd.scra.sc/sshws/health
 
 ### B2. Download the kit
 
-Skip this step if `C:\tools\sshtunnel` already exists. Replace `CHANGE-ME` as in A1.
+Skip this step if `C:\tools\sshtunnel` already exists.
 
 ```powershell
-git clone https://github.com/CHANGE-ME/sshtunnel.git C:\tools\sshtunnel
+git clone https://github.com/AnonymousGhost-SC/sshtunnel.git C:\tools\sshtunnel
 ```
 
 ### B3. Add the SSH shortcuts
 
-Paste the fingerprint and the password between the quotes on the first two lines.
+Paste the two lines that step A9 printed on the server (`$fp = '...'` and `$pw = '...'`), pressing Enter after each. Then continue:
 
-```powershell
-$fp = "PASTE-FINGERPRINT-HERE"
-```
-```powershell
-$pw = "PASTE-PASSWORD-HERE"
-```
 ```powershell
 $url = "https://fmd.scra.sc/sshws/"
 ```
