@@ -59,6 +59,54 @@ Skip this step if `C:\sshtunnel` already exists.
 ```powershell
 git clone $repo $d
 ```
+
+**`git : The term 'git' is not recognized`:** git is missing from this window's PATH. Find it:
+
+```powershell
+$gp = "C:\Program Files\Git\cmd", "C:\Program Files (x86)\Git\cmd"
+```
+```powershell
+$gp += "$env:LOCALAPPDATA\Programs\Git\cmd"
+```
+```powershell
+$gp += (Resolve-Path "$env:LOCALAPPDATA\GitHubDesktop\app-*\resources\app\git\cmd" -EA 0).Path
+```
+```powershell
+$g = $gp | Where-Object { $_ -and (Test-Path "$_\git.exe") } | Select-Object -First 1
+```
+```powershell
+$g
+```
+
+- **A folder is printed:** add it to PATH, then clone.
+
+  ```powershell
+  $env:Path += ";$g"
+  ```
+  ```powershell
+  git clone $repo $d
+  ```
+
+- **Nothing is printed:** download the kit as a zip file. This needs no git.
+
+  ```powershell
+  [Net.ServicePointManager]::SecurityProtocol = 'Tls12'
+  ```
+  ```powershell
+  $zip = "$env:TEMP\sshtunnel.zip"
+  ```
+  ```powershell
+  Invoke-WebRequest "$($repo -replace '\.git$','')/archive/refs/heads/main.zip" -OutFile $zip -UseBasicParsing
+  ```
+  ```powershell
+  Expand-Archive $zip "$env:TEMP\sshtunnel-x" -Force
+  ```
+  ```powershell
+  Move-Item "$env:TEMP\sshtunnel-x\sshtunnel-main" $d
+  ```
+
+Check the result:
+
 ```powershell
 Get-ChildItem $d
 ```
