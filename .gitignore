@@ -1,0 +1,4 @@
+# Secrets and logs created on the server. Never commit them.
+users.json
+key.pem
+chisel.log
